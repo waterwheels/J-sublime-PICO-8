@@ -1,7 +1,7 @@
 <snippet>
 	<content><![CDATA[
 repeat
- ${2:-- loop code}
+	${2:-- loop code}
 until ${1:condition}
 ]]></content>
 	<tabTrigger>repeat</tabTrigger>

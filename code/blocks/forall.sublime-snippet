@@ -1,7 +1,7 @@
 <snippet>
 	<content><![CDATA[
 for ${1:value} in all(${2:table}) do
- ${3:-- loop code}
+	${3:-- loop code}
 end
 ]]></content>
 	<tabTrigger>forall</tabTrigger>

@@ -1,15 +1,15 @@
 <snippet>
 	<content><![CDATA[
 function _init()
- ${1:-- init code}
+	${1:-- init code}
 end
 
 function _update60()
- ${2:-- update code}
+	${2:-- update code}
 end
 
 function _draw()
- ${3:-- draw code}
+	${3:-- draw code}
 end
 ]]></content>
 	<tabTrigger>main</tabTrigger>
