@@ -1,0 +1,173 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: PICO-8
+comment: PICO-8 (lua syntax 0.8)
+file_extensions:
+  - p8
+scope: source.p8
+
+variables:
+  reserved_word: |-
+    (?x:(?:
+      and|break|do|elseif|else|end|false|for|function|goto|if|in|
+      local|nil|not|or|repeat|return|then|true|until|while
+    ){{identifier_break}})
+  reserved_word_statement: |- # excludes 'not', 'true', 'nil', 'false', 'function'
+    (?x:(?:
+      and|break|do|elseif|else|end|for|goto|if|in|
+      local|or|repeat|return|then|until|while
+    ){{identifier_break}})
+  metamethod: |- # http://lua-users.org/wiki/MetatableEvents
+    (?x:__(?:
+      # special
+      index|newindex|call|tostring|len|i?pairs|gc
+      # math operators
+      |unm|add|sub|mul|i?div|mod|pow|concat
+      # bitwise operators
+      |band|bor|bxor|bnot|shl|shr
+      # comparison
+      |eq|lt|le
+    ){{identifier_break}})
+  # __metatable and __mode don't use functions
+  metaproperty: (?:__(?:metatable|mode){{identifier_break}})
+
+  identifier_start: '[A-Za-z_]'
+  identifier_char: '[A-Za-z0-9_]'
+  identifier_break: (?!{{identifier_char}})
+  identifier_raw: (?:{{identifier_start}}{{identifier_char}}*)
+  identifier: (?:(?!{{reserved_word}}){{identifier_raw}})
+
+  trailing_expression_char: '[,\]})]'
+
+  function_args_begin: (?:\(|"|'|\[=*\[|\{)
+  function_call_ahead: (?=\s*{{function_args_begin}})
+  function_assignment_ahead: (?=\s*=\s*function{{identifier_break}})
+
+  dec_exponent: (?:[Ee][-+]?\d*)
+  hex_exponent: (?:[Pp][-+]?\d*)
+
+contexts:
+  main:
+    - match: '(?=pico-8 cartridge \/\/ http://www.pico-8.com)'
+      embed: scope:text.plain.txt
+      escape: '(?=^__lua__)'
+
+    - match: '^__[a-z0-9]{3}__|^-->8'
+      scope: comment.block.lua markup.heading
+
+    - match: '^(\#include)\b(.*)$'
+      captures:
+        1: keyword.control.include.lua
+        2: string.unquoted
+      scope: meta.statement.import keyword.control.include.lua
+
+    - match: '\b(function)\s+([a-zA-Z_.:]+[.:])?([a-zA-Z_]\w*)\s*(\()([^)]*)(\))'
+      scope: meta.function.lua
+      captures:
+        1: keyword.control.lua
+        2: entity.name.function.scope.lua
+        3: entity.name.function.lua
+        4: punctuation.definition.parameters.begin.lua
+        5: variable.parameter.function.lua
+        6: punctuation.definition.parameters.end.lua
+    - match: '(?<![\d.])\b0x[a-fA-F\d]+|\b\d+(\.\d+)?([eE]-?\d+)?|\.\d+([eE]-?\d+)?'
+      scope: constant.numeric.lua
+    - match: "'"
+      captures:
+        0: punctuation.definition.string.begin.lua
+      push:
+        - meta_scope: string.quoted.single.lua
+        - match: "'"
+          captures:
+            0: punctuation.definition.string.end.lua
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.lua
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.lua
+      push:
+        - meta_scope: string.quoted.double.lua
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.end.lua
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.lua
+    - match: '(?<!--)\[(=*)\['
+      captures:
+        0: punctuation.definition.string.begin.lua
+      push:
+        - meta_scope: string.quoted.other.multiline.lua
+        - match: '\]\1\]'
+          captures:
+            0: punctuation.definition.string.end.lua
+          pop: true
+    - match: '--\[(=*)\['
+      captures:
+        0: punctuation.definition.comment.lua
+      push:
+        - meta_scope: comment.block.lua
+        - match: '\]\1\]'
+          captures:
+            0: punctuation.definition.comment.lua
+          pop: true
+    - match: '(--)(?!\[\[).*$\n?'
+      scope: comment.line.double-dash.lua
+      captures:
+        1: punctuation.definition.comment.lua
+    - match: \b(break|do|else|for|if|elseif|return|then|repeat|while|until|end|function|local|in|goto)\b
+      scope: keyword.control.lua
+    - match: '(?<![^.]\.|:)\b(false|nil|true)\b'
+      scope: constant.language.lua
+    - match: '(?<![^.]\.|:)\b(self)\b'
+      scope: variable.language.self.lua
+    - match: '(?<![^.]\.|:)\b(_draw|_init|_update|_update60|abs|add|all|assert|atan2|band|bnot|bor|btn|btnp|bxor|camera|cartdata|cd|circ|circfill|clip|cls|cocreate|color|coresume|cos|costatus|count|cstore|cursor|del|dget|dir|dset|exit|export|extcmd|fget|flip|flr|folder|foreach|fset|help|holdframe|import|info|install_demos|install_games|keyconfig|line|load|ls|map|mapdraw|max|memcpy|memset|menuitem|mget|mid|min|mkdir|mset|music|pairs|pal|palt|peek|pget|poke|print|printh|pset|reboot|rect|rectfill|reload|resume|rnd|run|save|setmetatable|sfx|sget|sgn|shl|shr|shutdown|sin|splore|spr|sqrt|srand|sset|sspr|stat|sub|time|type|yield)\b'
+      scope: support.function.lua
+    - match: \b(and|or|not)\b
+      scope: keyword.operator.lua
+    - match: '\(|\)|\;|\+=?|-=?|%=?|#|\*=?|\/=?|\^=?|\[|\]|==?|~=|<=?|>=?|,|\.\.?\.?|(?<!\.)\.{2}(?!\.)|(?<=\w):'
+      scope: keyword.operator.punctuation.lua
+
+    - match: '{{identifier}}{{function_call_ahead}}'
+      scope: meta.property.lua meta.function-call.lua variable.function.lua
+
+    - match: '(?<=__gfx__)|(?<=__label__)'
+      push:
+        - meta_scope: constant.numeric.lua.pico.gfx
+        - match: '0'
+          scope: constant.numeric.lua.pico.gfx.0
+        - match: '1'
+          scope: constant.numeric.lua.pico.gfx.1
+        - match: '2'
+          scope: constant.numeric.lua.pico.gfx.2
+        - match: '3'
+          scope: constant.numeric.lua.pico.gfx.3
+        - match: '4'
+          scope: constant.numeric.lua.pico.gfx.4
+        - match: '5'
+          scope: constant.numeric.lua.pico.gfx.5
+        - match: '6'
+          scope: constant.numeric.lua.pico.gfx.6
+        - match: '7'
+          scope: constant.numeric.lua.pico.gfx.7
+        - match: '8'
+          scope: constant.numeric.lua.pico.gfx.8
+        - match: '9'
+          scope: constant.numeric.lua.pico.gfx.9
+        - match: 'a'
+          scope: constant.numeric.lua.pico.gfx.10
+        - match: 'b'
+          scope: constant.numeric.lua.pico.gfx.11
+        - match: 'c'
+          scope: constant.numeric.lua.pico.gfx.12
+        - match: 'd'
+          scope: constant.numeric.lua.pico.gfx.13
+        - match: 'e'
+          scope: constant.numeric.lua.pico.gfx.14
+        - match: 'f'
+          scope: constant.numeric.lua.pico.gfx.15
+
+        - match: '(?=^__)'
+          pop: true
